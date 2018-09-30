@@ -14,8 +14,10 @@ namespace Portfolio.ConfigServices
     {
         public AutoMapperConfig()
         {
-            CreateMap<Models.Portfolio, CreatePortfolioViewModel>().ReverseMap();
+            CreateMap<Models.Portfolio, CreatePortfolioViewModel>().ReverseMap()
+                .ForMember(a => a.Image, b => b.ResolveUsing(a => a.Image.FileName));
             CreateMap<Category, CategoryViewModel>().ReverseMap();
+      
         }
 
         private void AfterMap(Func<object, object, object> p)
