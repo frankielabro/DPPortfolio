@@ -20,7 +20,6 @@ namespace Portfolio.Controllers
     public class AuthController : Controller
     {
         private readonly IAuthRepository _repo;
-
         private readonly IConfiguration _config;
 
         public AuthController(IAuthRepository repo, IConfiguration config)

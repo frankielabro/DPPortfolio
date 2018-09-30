@@ -14,8 +14,8 @@ namespace Portfolio.ConfigServices
     {
         public AutoMapperConfig()
         {
-           
-
+            CreateMap<Models.Portfolio, CreatePortfolioViewModel>().ReverseMap();
+            CreateMap<Category, CategoryViewModel>().ReverseMap();
         }
 
         private void AfterMap(Func<object, object, object> p)
