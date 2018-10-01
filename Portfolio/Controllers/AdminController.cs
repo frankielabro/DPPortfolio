@@ -106,7 +106,7 @@ namespace Portfolio.Controllers
         }
 
         //endpoint for editing the photo
-        [HttpPut("portfolio/{id}")]
+        [HttpPut("portfolio/editPhoto/{id}")]
         public IActionResult ChangeImage(int id, IFormFile Image)
         {
             if (!ModelState.IsValid)
@@ -135,7 +135,7 @@ namespace Portfolio.Controllers
                     Image.CopyTo(stream);
                 }
 
-                portfolio.Image = category.Name + "/" + portfolio.PortfolioId.ToString() + "/" + portfolio.Image;
+                portfolio.Image = category.Name + "/" + portfolio.PortfolioId.ToString() + "/" + Image.FileName;
                 _context.Update(portfolio);
                 _context.SaveChanges();
 
@@ -147,6 +147,21 @@ namespace Portfolio.Controllers
                 throw ex;
             }
         }
+
+        [HttpDelete("portfolio/{id}")]
+        public IActionResult DeletePortfolio(int id)
+        {
+            if (!_context.Portfolio.Any(p => p.PortfolioId == id)) return Json(StatusCode(404, "PortfolioId not found"));
+
+            var portfolio = _context.Portfolio.FirstOrDefault(p => p.PortfolioId == id);
+
+            _context.Remove(portfolio);
+            _context.SaveChanges();
+
+
+            return Json(Ok());
+        }
+
 
 
         //end point for deleting the portfolio
