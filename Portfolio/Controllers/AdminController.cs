@@ -10,6 +10,8 @@ using Portfolio.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using System.IO;
+using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.Http;
 
 namespace Portfolio.Controllers
 {
@@ -34,7 +36,7 @@ namespace Portfolio.Controllers
         }
 
         [HttpPost("portfolio")]
-        public IActionResult createPortfolio(CreatePortfolioViewModel createVM)
+        public IActionResult CreatePortfolio(CreatePortfolioViewModel createVM)
         {
             if (!ModelState.IsValid)
             {
@@ -79,19 +81,82 @@ namespace Portfolio.Controllers
                 throw ex;
             }
         }
-
+        
         //endpoint for editing the info
+        
+        [HttpPatch("portfolio/{id}")]
+        public IActionResult Patch(int id, [FromBody]JsonPatchDocument<PortfolioPathViewModel> portfolioPatch)
+        {
+
+            if (!_context.Portfolio.Any(p => p.PortfolioId == id)) return Json(BadRequest("Id doesn't exist."));
+
+            var portfolio = _context.Portfolio.FirstOrDefault(p => p.PortfolioId == id);
+
+            //Use Automapper to map that to our DTO object.
+            PortfolioPathViewModel portfolioDTO = _map.Map<PortfolioPathViewModel>(portfolio);
+
+            portfolioPatch.ApplyTo(portfolioDTO); //Apply the patch to that DTO. 
+
+            _map.Map(portfolioDTO, portfolio); //Use automapper to map the DTO back on top of the database object. 
+
+            _context.Portfolio.Update(portfolio); //Update our portfolio in the database. 
+            _context.SaveChanges();
+
+            return Json(portfolioDTO);
+        }
 
         //endpoint for editing the photo
-
-        //end point for deleting the portfolio
-        
-        [HttpPost("category")]
-        public IActionResult createCategory([FromBody]CategoryViewModel categoryVM)
+        [HttpPut("portfolio/{id}")]
+        public IActionResult ChangeImage(int id, IFormFile Image)
         {
             if (!ModelState.IsValid)
             {
-                return Json(StatusCode(400));
+                return Json(BadRequest(ModelState));
+            }
+
+            try
+            {
+                //adding to database
+
+                if (Image == null || Image.Length == 0)return Json(Content("file not selected"));
+
+                var dir = _configuration.GetSection("Directory:Portfolio").Value;
+
+                var portfolio = _context.Portfolio.FirstOrDefault(p => p.PortfolioId == id);
+
+                var category = _context.Category.FirstOrDefault(c => c.CategoryId == portfolio.CategoryId);
+
+                var path = Path.Combine(dir, category.Name, portfolio.PortfolioId.ToString(), Image.FileName);
+
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
+
+                using (var stream = new FileStream(path, FileMode.Create))
+                {
+                    Image.CopyTo(stream);
+                }
+
+                portfolio.Image = category.Name + "/" + portfolio.PortfolioId.ToString() + "/" + portfolio.Image;
+                _context.Update(portfolio);
+                _context.SaveChanges();
+
+                return Json(StatusCode(204));
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+        }
+
+
+        //end point for deleting the portfolio
+
+        [HttpPost("category")]
+        public IActionResult CreateCategory([FromBody]CategoryViewModel categoryVM)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json(BadRequest(ModelState));
             }
 
             try
@@ -112,5 +177,7 @@ namespace Portfolio.Controllers
 
             return Json(StatusCode(201));
         }
+
+        
     }
 }

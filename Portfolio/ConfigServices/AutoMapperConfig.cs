@@ -17,7 +17,8 @@ namespace Portfolio.ConfigServices
             CreateMap<Models.Portfolio, CreatePortfolioViewModel>().ReverseMap()
                 .ForMember(a => a.Image, b => b.ResolveUsing(a => a.Image.FileName));
             CreateMap<Category, CategoryViewModel>().ReverseMap();
-      
+            CreateMap<Models.Portfolio, PortfolioPathViewModel>().ReverseMap();
+            
         }
 
         private void AfterMap(Func<object, object, object> p)

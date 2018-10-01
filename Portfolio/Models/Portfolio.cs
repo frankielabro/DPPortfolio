@@ -9,7 +9,7 @@ namespace Portfolio.Models
         public string Title { get; set; }
         public string Image { get; set; }
         public string DeveloperInitials { get; set; }
-
+        public string Link { get; set; }
         [ForeignKey("Category")]
         public int CategoryId { get; set; }
 
