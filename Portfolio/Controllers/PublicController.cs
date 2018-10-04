@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Portfolio.Entity;
 
@@ -28,7 +29,7 @@ namespace Portfolio.Controllers
         [HttpGet("portfolio")]
         public IActionResult GetPortfolioByCategory(int category)
         {
-            var portfolios = _context.Portfolio.ToList().OrderBy(p => p.Title);
+            var portfolios = _context.Portfolio.Include("Category").ToList().OrderBy(p => p.Title);
             return Json(portfolios);
         }
         
