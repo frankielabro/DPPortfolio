@@ -16,6 +16,7 @@ using Microsoft.IdentityModel.Tokens;
 using Portfolio.ConfigServices;
 using Portfolio.Entity;
 using Portfolio.Services;
+using Swashbuckle.AspNetCore.Swagger;
 
 namespace Portfolio
 {
@@ -53,6 +54,13 @@ namespace Portfolio
                         ValidateAudience = false
                     };
                 });
+
+            //NOTE: Don't install Swagger using Package Manager Console. Use the Nuget Package Manager instead.
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new Info { Title = "My API", Version = "v1" });
+            });
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -66,6 +74,26 @@ namespace Portfolio
             {
                 app.UseHsts();
             }
+
+            // Enable middleware to serve generated Swagger as a JSON endpoint.
+            app.UseSwagger();
+
+            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), 
+            // specifying the Swagger JSON endpoint.
+            app.UseSwaggerUI(c =>
+            {
+
+
+                //Swagger for remote desktop
+                c.SwaggerEndpoint("/portfolio/api/swagger/v1/swagger.json", "Client Landing Page");
+
+                //Swagger for local
+                //c.SwaggerEndpoint("/swagger/v1/swagger.json", "Client Landing Page");
+                c.RoutePrefix = "docs/swagger";
+                //Note: this must not have any slash before the routeprefix.
+            });
+
+
 
             app.UseCors(x => x.AllowAnyHeader()
                .AllowAnyMethod()

@@ -19,11 +19,7 @@ namespace Portfolio.Controllers
     [Route("admin")]
     public class AdminController : Controller
     {
-        public IActionResult Index()
-        {
-            return View();
-        }
-
+        
         private DataContext _context;
         private readonly IMapper _map;
         private readonly IConfiguration _configuration;
@@ -35,9 +31,20 @@ namespace Portfolio.Controllers
             _configuration = configuration;
         }
 
+        [HttpGet("portfolio/{id}")]
+        public IActionResult PortfolioById(int id)
+        {
+            var user = _context.Portfolio?.FirstOrDefault(p => p.PortfolioId == id);
+
+            return Json(user);
+        
+        }
+
         [HttpPost("portfolio")]
         public IActionResult CreatePortfolio(CreatePortfolioViewModel createVM)
         {
+            //return Json(createVM);
+
             if (!ModelState.IsValid)
             {
                 return Json(BadRequest(ModelState));
@@ -46,9 +53,10 @@ namespace Portfolio.Controllers
             try
             {
                 if (_context.Portfolio.Any(p => p.Title == createVM.Title)) return Json(StatusCode(409));
-                if (!_context.Category.Any(c => c.CategoryId == createVM.CategoryId)) return Json(StatusCode(404, "Category not found"));
-                
+                if (!_context.Category.Any(c => c.CategoryId == Convert.ToInt32(createVM.CategoryId))) return Json(StatusCode(404, "Category not found: " + createVM.CategoryId));
+
                 //adding to database
+
                 var portfolio = _map.Map<Models.Portfolio>(createVM);
                 portfolio.DeveloperInitials = portfolio.DeveloperInitials.ToUpper();
                 _context.Add(portfolio);
@@ -58,8 +66,8 @@ namespace Portfolio.Controllers
                     return Json(Content("file not selected"));
 
                 var dir = _configuration.GetSection("Directory:Portfolio").Value;
-                var category = _context.Category.FirstOrDefault(c => c.CategoryId == createVM.CategoryId);
-                
+                var category = _context.Category.FirstOrDefault(c => c.CategoryId == Convert.ToInt32(createVM.CategoryId));
+
                 var path = Path.Combine(dir, category.Name, portfolio.PortfolioId.ToString(), createVM.Image.FileName);
 
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
@@ -68,11 +76,11 @@ namespace Portfolio.Controllers
                 {
                     createVM.Image.CopyTo(stream);
                 }
-                
+
                 portfolio.Image = category.Name + "/" + portfolio.PortfolioId.ToString() + "/" + portfolio.Image;
                 _context.Update(portfolio);
                 _context.SaveChanges();
-                
+
                 return Json(StatusCode(201));
             }
             catch (Exception ex)
@@ -81,9 +89,9 @@ namespace Portfolio.Controllers
                 throw ex;
             }
         }
-        
+
         //endpoint for editing the info
-        
+
         [HttpPatch("portfolio/{id}")]
         public IActionResult Patch(int id, [FromBody]JsonPatchDocument<PortfolioPathViewModel> portfolioPatch)
         {
@@ -105,6 +113,51 @@ namespace Portfolio.Controllers
             return Json(portfolioDTO);
         }
 
+
+        //[HttpPut("portfolio/{id}")]
+        //public IActionResult Update(int id, [FromBody] PortfolioPathViewModel portfolioVM)
+        //{
+
+        //    if (!_context.Portfolio.Any(p => p.PortfolioId == id)) return Json(BadRequest("Id doesn't exist."));
+
+        //    var portfolio = _context.Portfolio.FirstOrDefault(p => p.PortfolioId == id);
+            
+            
+        //    portfolio = _map.Map<Models.Portfolio>(portfolioVM); //Use automapper to map the DTO back on top of the database object. 
+
+        //    _context.Portfolio.Update(portfolio); //Update our portfolio in the database. 
+        //    _context.SaveChanges();
+
+        //    return Json(portfolio);
+
+        //}
+
+        [HttpPut("portfolio/{id}")]
+        public IActionResult UpdateSkillName(int id, [FromBody] PortfolioPathViewModel portfolioVM)
+        {
+            try
+            {
+                if (!_context.Portfolio.Any(p => p.PortfolioId == id)) return Json(BadRequest("Id doesn't exist."));
+                if (!_context.Category.Any(c => c.CategoryId == portfolioVM.CategoryId)) return Json(BadRequest("CategoryId doesn't exist."));
+
+
+                var portfolio = _context.Portfolio?.FirstOrDefault(p => p.PortfolioId == id);
+
+
+                portfolioVM.PortfolioId = id;
+                _map.Map(portfolioVM, portfolio);
+                _context.Update(portfolio);
+                _context.SaveChanges();
+
+                return Json(new NoContentResult());
+            }
+            catch (Exception ex)
+            {
+                return Json(BadRequest(ex));
+            }
+        }
+
+        
         //endpoint for editing the photo
         [HttpPut("portfolio/editPhoto/{id}")]
         public IActionResult ChangeImage(int id, IFormFile Image)

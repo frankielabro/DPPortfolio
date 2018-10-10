@@ -15,9 +15,12 @@ namespace Portfolio.ConfigServices
         public AutoMapperConfig()
         {
             CreateMap<Models.Portfolio, CreatePortfolioViewModel>().ReverseMap()
-                .ForMember(a => a.Image, b => b.ResolveUsing(a => a.Image.FileName));
+                .ForMember(a => a.Image, b => b.ResolveUsing(a => a.Image.FileName))
+                .ForMember(a => a.CategoryId, b => b.ResolveUsing(a => Convert.ToInt32(a.CategoryId)))
+                ;
             CreateMap<Category, CategoryViewModel>().ReverseMap();
             CreateMap<Models.Portfolio, PortfolioPathViewModel>().ReverseMap();
+            CreateMap<Models.Portfolio, PortfolioWithCategoryViewModel>().ReverseMap();
             
         }
 
